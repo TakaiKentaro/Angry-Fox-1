@@ -5,21 +5,13 @@ using UnityEngine;
 public class Line : MonoBehaviour
 {
     private Rigidbody2D physics = null;
-
     [SerializeField]
-    private LineRenderer direction = null;// 発射方向
-
-    private const float MaxMagnitude = 3f;// 最大付与力量
-
-    private Vector2 currentForce = Vector2.zero;// 発射方向の力
-
-    private Camera mainCamera = null;// メインカメラ
-
-    private Transform mainCameraTransform = null;// メインカメラ座標
-
-    private Vector2 dragStart = Vector2.zero;
-
-
+    private LineRenderer ren = null;
+    private const float MaxMagnitude = 3f;
+    private Vector2 m_power = Vector2.zero;
+    private Camera mainCamera = null; 
+    private Transform mainCameraTransform = null;
+    private Vector2 s_power = Vector2.zero;
     void Start()
     {
         this.physics = this.GetComponent<Rigidbody2D>();
@@ -27,64 +19,42 @@ public class Line : MonoBehaviour
         this.mainCameraTransform = this.mainCamera.transform;
     }
 
-
-    /// <summary>
-    /// マウス座標をワールド座標に変換して取得
-    /// </summary>
-    /// <returns></returns>
     private Vector2 GetMousePosition()
     {
-        // マウスから取得できないZ座標を補完する
         var position = Input.mousePosition;
-        //position.z = this.mainCameraTransform.position.z;
         position = this.mainCamera.ScreenToWorldPoint(position);
-        //position.z = 0;
 
         return position;
     }
-
-    /// <summary>
-    /// ドラック開始イベントハンドラ
-    /// </summary>
     public void OnMouseDown()
     {
-        this.dragStart = this.GetMousePosition();
+        this.s_power = this.GetMousePosition();
 
-        this.direction.enabled = true;
-        this.direction.SetPosition(0, this.physics.position);
-        this.direction.SetPosition(1, new Vector2(this.physics.position.x, this.physics.position.y * -1));
+        this.ren.enabled = true;
+        this.ren.SetPosition(0, this.physics.position);
+        this.ren.SetPosition(1, new Vector2(this.physics.position.x, this.physics.position.y * -1));
 
     }
 
-    /// <summary>
-    /// ドラッグ中イベントハンドラ
-    /// </summary>
     public void OnMouseDrag()
     {
         var position = this.GetMousePosition();
-        this.currentForce = position - this.dragStart;
-        if (this.currentForce.magnitude > MaxMagnitude * MaxMagnitude)
+        this.m_power = position - this.s_power;
+        if (this.m_power.magnitude > MaxMagnitude * MaxMagnitude)
         {
-            this.currentForce *= MaxMagnitude / this.currentForce.magnitude;
+            this.m_power *= MaxMagnitude / this.m_power.magnitude;
         }
 
-        this.direction.SetPosition(0, this.physics.position);
-        this.direction.SetPosition(1, new Vector2((this.physics.position.x + this.currentForce.x), this.physics.position.y + this.currentForce.y) * -1);
+        this.ren.SetPosition(0, this.physics.position);
+        this.ren.SetPosition(1, new Vector2((this.physics.position.x + this.m_power.x), this.physics.position.y + this.m_power.y) * -1);
     }
 
-    /// <summary>
-    /// ドラッグ終了イベントハンドラ
-    /// </summary>
     public void OnMouseUp()
     {
-        this.direction.enabled = false;
-        this.Flip(this.currentForce * -6f); //引っ張った方の逆にぶっ飛ばす
+        this.ren.enabled = false;
+        this.Flip(this.m_power * -6f); 
     }
 
-    /// <summary>
-    /// ボールをはじく
-    /// </summary>
-    /// <param name="force"></param>
     public void Flip(Vector2 force)
     {
         // 瞬間的に力を加えてはじく
